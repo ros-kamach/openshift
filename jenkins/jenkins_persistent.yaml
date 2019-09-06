@@ -1,166 +1,82 @@
-apiVersion: v1
-items:
-- apiVersion: v1
-  kind: ServiceAccount
-  metadata:
-    annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"jenkins"}}'
-    labels:
-      app: jenkins-ephemeral
-      template: jenkins-ephemeral-template
-    name: jenkins
-    namespace: jenkins-ci
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: jenkins-persistent
+  template: jenkins-persistent-template
+message: Hi
+metadata:
+  annotations:
+    description: |-
+      Jenkins service, with persistent storage.
+    iconClass: icon-jenkins
+  name: jenkins-persistent
+  selfLink: /apis/template.openshift.io/v1/namespaces/openshift/templates/jenkins-persistent
+objects:
 - apiVersion: "v1"
   kind: "PersistentVolumeClaim"
   metadata:
-    name: "jenkins-storage"
-    namespace: jenkins-ci
+    name: ${JENKINS_SERVICE_NAME}-storage
   spec:
     accessModes:
-      - "ReadWriteOnce"
+      - ${STORAGE_ACCSESS_MODE}
     resources:
       requests:
-        storage: "10Gi"
-- apiVersion: apps.openshift.io/v1
+        storage: ${JENKINS_STORAGE_SIZE}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/timeout: 4m
+      template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
+    name: ${JENKINS_SERVICE_NAME}
+  spec:
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: ${JENKINS_SERVICE_NAME}
+- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     annotations:
       template.alpha.openshift.io/wait-for-ready: "true"
-    generation: 2
-    labels:
-      app: jenkins-ephemeral
-      template: jenkins-ephemeral-template
-    name: jenkins
-    namespace: jenkins-ci
+    name: ${JENKINS_SERVICE_NAME}
   spec:
     replicas: 1
-    revisionHistoryLimit: 10
     selector:
-      name: jenkins
+      name: ${JENKINS_SERVICE_NAME}
     strategy:
-      activeDeadlineSeconds: 21600
       recreateParams:
         timeoutSeconds: 1200
-      resources: {}
       type: Recreate
     template:
       metadata:
-        creationTimestamp: null
         labels:
-          name: jenkins
+          name: ${JENKINS_SERVICE_NAME}
       spec:
         containers:
-        - env:
-          - name: CONTAINER_CORE_LIMIT
-            value: '1'
-          - name: JAVA_MAX_HEAP_PARAM
-            value: '-Xmx1536m'
-          - name: JAVA_INITIAL_HEAP_PARAM
-            value: '-Xms1024m'
+        - capabilities: {}
+          env:
           - name: OPENSHIFT_ENABLE_OAUTH
-            value: "true"
+            value: ${ENABLE_OAUTH}
           - name: OPENSHIFT_ENABLE_REDIRECT_PROMPT
             value: "true"
           - name: DISABLE_ADMINISTRATIVE_MONITORS
-            value: "false"
+            value: ${DISABLE_ADMINISTRATIVE_MONITORS}
           - name: KUBERNETES_MASTER
             value: https://kubernetes.default:443
           - name: KUBERNETES_TRUST_CERTIFICATES
             value: "true"
           - name: JENKINS_SERVICE_NAME
-            value: jenkins
+            value: ${JENKINS_SERVICE_NAME}
           - name: JNLP_SERVICE_NAME
-            value: jenkins-jnlp
+            value: ${JNLP_SERVICE_NAME}
           - name: INSTALL_PLUGINS
-            value: >-
-                  locale
-                  saferestart
-                  authorize-project
-                  ant
-                  pam-auth
-                  blueocean-autofavorite
-                  cloudbees-bitbucket-branch-source
-                  blueocean-bitbucket-pipeline
-                  blueocean
-                  blueocean-core-js
-                  blueocean-pipeline-editor
-                  bouncycastle-api
-                  branch-api
-                  blueocean-commons
-                  conditional-buildstep
-                  blueocean-config
-                  config-file-provider
-                  credentials
-                  credentials-binding
-                  blueocean-dashboard
-                  jenkins-design-language
-                  display-url-api
-                  blueocean-display-url
-                  docker-commons
-                  docker-workflow
-                  durable-task
-                  blueocean-events
-                  external-monitor-job
-                  favorite
-                  cloudbees-folder
-                  git
-                  git-client
-                  blueocean-git-pipeline
-                  git-server
-                  github
-                  github-api
-                  github-branch-source
-                  blueocean-github-pipeline
-                  handy-uri-templates-2-api
-                  htmlpublisher
-                  blueocean-i18n
-                  jackson2-api
-                  javadoc
-                  ace-editor
-                  handlebars
-                  momentjs
-                  jaxb
-                  jira
-                  blueocean-jira
-                  job-dsl
-                  jsch
-                  junit
-                  blueocean-jwt
-                  kubernetes
-                  kubernetes-credentials
-                  ldap
-                  mailer
-                  matrix-auth
-                  mercurial
-                  jdk-tool
-                  antisamy-markup-formatter
-                  blueocean-personalization
-                  pipeline-graph-analysis
-                  blueocean-pipeline-api-impl
-                  blueocean-pipeline-scm-api
-                  pipeline-utility-steps
-                  workflow-api
-                  workflow-basic-steps
-                  pipeline-build-step
-                  pipeline-model-definition
-                  pipeline-model-extensions
-                  workflow-cps
-                  pipeline-input-step
-                  workflow-job
-                  pipeline-model-api
-                  workflow-multibranch
-                  workflow-durable-task-step
-                  pipeline-rest-api
-                  command-launcher
-                  maven-plugin
-                  workflow-scm-step
-                  pipeline-stage-view
-                  run-condition
-                  subversion
-                  windows-slaves
-          image: 172.30.1.1:5000/openshift/jenkins
-          name: jenkins
+            value: ${PLUGINS_LIST}
+          image: ' '
           imagePullPolicy: IfNotPresent
+          name: jenkins
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -169,7 +85,6 @@ items:
               scheme: HTTP
             initialDelaySeconds: 1200
             periodSeconds: 10
-            successThreshold: 1
             timeoutSeconds: 240
           readinessProbe:
             failureThreshold: 3
@@ -179,35 +94,28 @@ items:
               scheme: HTTP
             initialDelaySeconds: 900
             periodSeconds: 10
-            successThreshold: 1
             timeoutSeconds: 240
           resources:
             limits:
-              cpu: '1'
-              memory: 2Gi
+              cpu: ${GUARANT_CPU}
+              memory: ${GUARANT_MEMORY}
             requests:
-              cpu: 100m
-              memory: 1Gi
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
           securityContext:
             capabilities: {}
             privileged: false
           terminationMessagePath: /dev/termination-log
-          terminationMessagePolicy: File
           volumeMounts:
-            - name: "jenkins-data"
+            - name: ${JENKINS_SERVICE_NAME}-data
               mountPath: "/var/lib/jenkins"
         dnsPolicy: ClusterFirst
         restartPolicy: Always
-        schedulerName: default-scheduler
-        securityContext: {}
-        serviceAccount: jenkins
-        serviceAccountName: jenkins
-        terminationGracePeriodSeconds: 30
+        serviceAccountName: ${JENKINS_SERVICE_NAME}
         volumes:
-          - name: "jenkins-data"
+          - name: ${JENKINS_SERVICE_NAME}-data
             persistentVolumeClaim:
-              claimName: jenkins-storage
-    test: false
+              claimName: ${JENKINS_SERVICE_NAME}-storage
     triggers:
     - imageChangeParams:
         automatic: true
@@ -215,79 +123,198 @@ items:
         - jenkins
         from:
           kind: ImageStreamTag
-          name: jenkins:2
-          namespace: openshift
-        lastTriggeredImage: 172.30.1.1:5000/openshift/jenkins
+          name: ${JENKINS_IMAGE_STREAM_TAG}
+          namespace: ${NAMESPACE}
+        lastTriggeredImage: ""
       type: ImageChange
     - type: ConfigChange
 - apiVersion: v1
-  kind: Service
+  kind: ServiceAccount
   metadata:
     annotations:
-      service.alpha.openshift.io/dependencies: '[{"name": "jenkins-jnlp", "namespace":
-        "", "kind": "Service"}]'
-      service.openshift.io/infrastructure: "true"
-    labels:
-      app: jenkins-ephemeral
-      template: jenkins-ephemeral-template
-    name: jenkins
-    namespace: jenkins-ci
-  spec:
-    clusterIP: 172.30.147.173
-    ports:
-    - name: web
-      port: 80
-      protocol: TCP
-      targetPort: 8080
-    selector:
-      name: jenkins
-    sessionAffinity: None
-    type: ClusterIP
-  status:
-    loadBalancer: {}
+      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${JENKINS_SERVICE_NAME}"}}'
+    name: ${JENKINS_SERVICE_NAME}
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    name: ${JENKINS_SERVICE_NAME}_edit
+  roleRef:
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: ${JENKINS_SERVICE_NAME}
 - apiVersion: v1
   kind: Service
   metadata:
-    labels:
-      app: jenkins-ephemeral
-      template: jenkins-ephemeral-template
-    name: jenkins-jnlp
-    namespace: jenkins-ci
+    name: ${JNLP_SERVICE_NAME}
   spec:
-    clusterIP: 172.30.92.34
     ports:
     - name: agent
+      nodePort: 0
       port: 50000
       protocol: TCP
       targetPort: 50000
     selector:
-      name: jenkins
+      name: ${JENKINS_SERVICE_NAME}
     sessionAffinity: None
     type: ClusterIP
-  status:
-    loadBalancer: {}
-- apiVersion: route.openshift.io/v1
-  kind: Route
+- apiVersion: v1
+  kind: Service
   metadata:
     annotations:
-      haproxy.router.openshift.io/timeout: 4m
-      openshift.io/host.generated: "true"
-      template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
-    labels:
-      app: jenkins-ephemeral
-      template: jenkins-ephemeral-template
-    name: jenkins
-    namespace: jenkins-ci
+      service.alpha.openshift.io/dependencies: '[{"name": "${JNLP_SERVICE_NAME}",
+        "namespace": "", "kind": "Service"}]'
+      service.openshift.io/infrastructure: "true"
+    name: ${JENKINS_SERVICE_NAME}
   spec:
-    tls:
-      insecureEdgeTerminationPolicy: Redirect
-      termination: edge
-    to:
-      kind: Service
-      name: jenkins
-      weight: 100
-    wildcardPolicy: None
-kind: List
-metadata:
-  resourceVersion: ""
-  selfLink: ""
+    ports:
+    - name: web
+      nodePort: 0
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      name: ${JENKINS_SERVICE_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+parameters:
+- description: The name of the OpenShift Service exposed for the Jenkins container.
+  displayName: Jenkins Service Name
+  name: JENKINS_SERVICE_NAME
+  value: jenkins
+- description: The name of the service used for master/slave communication.
+  displayName: Jenkins JNLP Service Name
+  name: JNLP_SERVICE_NAME
+  value: jenkins-jnlp
+- description: Jenkins Plugins to install
+  name: PLUGINS_LIST
+  value: >-
+          locale
+          saferestart
+          authorize-project
+          ant
+          pam-auth
+          blueocean-autofavorite
+          cloudbees-bitbucket-branch-source
+          blueocean-bitbucket-pipeline
+          blueocean
+          blueocean-core-js
+          blueocean-pipeline-editor
+          bouncycastle-api
+          branch-api
+          blueocean-commons
+          conditional-buildstep
+          blueocean-config
+          config-file-provider
+          credentials
+          credentials-binding
+          blueocean-dashboard
+          jenkins-design-language
+          display-url-api
+          blueocean-display-url
+          docker-commons
+          docker-workflow
+          durable-task
+          blueocean-events
+          external-monitor-job
+          favorite
+          cloudbees-folder
+          git
+          git-client
+          blueocean-git-pipeline
+          git-server
+          github
+          github-api
+          github-branch-source
+          blueocean-github-pipeline
+          handy-uri-templates-2-api
+          htmlpublisher
+          blueocean-i18n
+          jackson2-api
+          javadoc
+          ace-editor
+          handlebars
+          momentjs
+          jaxb
+          jira
+          blueocean-jira
+          job-dsl
+          jsch
+          junit
+          blueocean-jwt
+          kubernetes
+          kubernetes-credentials
+          ldap
+          mailer
+          matrix-auth
+          mercurial
+          jdk-tool
+          antisamy-markup-formatter
+          blueocean-personalization
+          pipeline-graph-analysis
+          blueocean-pipeline-api-impl
+          blueocean-pipeline-scm-api
+          pipeline-utility-steps
+          workflow-api
+          workflow-basic-steps
+          pipeline-build-step
+          pipeline-model-definition
+          pipeline-model-extensions
+          workflow-cps
+          pipeline-input-step
+          workflow-job
+          pipeline-model-api
+          workflow-multibranch
+          workflow-durable-task-step
+          pipeline-rest-api
+          command-launcher
+          maven-plugin
+          workflow-scm-step
+          pipeline-stage-view
+          run-condition
+          subversion
+          windows-slaves
+- description: Whether to enable OAuth OpenShift integration. If false, the static
+    account 'admin' will be initialized with the password 'password'.
+  displayName: Enable OAuth in Jenkins
+  name: ENABLE_OAUTH
+  value: "true"
+- description: The minimum amount of CPU the container is guaranteed.
+  displayName: CPU Gauraneed
+  name: GUARANT_CPU
+  value: '1'
+- description: The maximum amount of CPU the container is allowed to use when running.
+  displayName: CPU Limit
+  name: CPU_LIMIT
+  value: 100m
+- description: The maximum amount of memory the container is allowed to use when running.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  value: 1Gi
+- description: The minimum amount of memory the container is guaranteed.
+  displayName: Memory Gauraneed
+  name: GUARANT_MEMORY
+  value: 2Gi
+- description: Jenkins Storage type.
+  displayName: Jenkins Starage
+  name: STORAGE_ACCSESS_MODE
+  value: "ReadWriteOnce"
+- description: Jenkins Storage type.
+  displayName: Jenkins Starage
+  name: JENKINS_STORAGE_SIZE
+  value: "10Gi"
+- description: The OpenShift Namespace where the Jenkins ImageStream resides.
+  displayName: Jenkins ImageStream Namespace
+  name: NAMESPACE
+  value: openshift
+- description: Whether to perform memory intensive, possibly slow, synchronization
+    with the Jenkins Update Center on start.  If true, the Jenkins core update monitor
+    and site warnings monitor are disabled.
+  displayName: Disable memory intensive administrative monitors
+  name: DISABLE_ADMINISTRATIVE_MONITORS
+  value: "false"
+- description: Name of the ImageStreamTag to be used for the Jenkins image.
+  displayName: Jenkins ImageStreamTag
+  name: JENKINS_IMAGE_STREAM_TAG
+  value: jenkins:2

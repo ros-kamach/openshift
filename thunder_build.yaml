@@ -7,98 +7,83 @@ metadata:
   name: thunder-build
   namespace: openshift
 objects:
-######################################
-# - apiVersion: build.openshift.io/v1
-#   kind: BuildConfig
-#   metadata:
-#     annotations:
-#       openshift.io/generated-by: OpenShiftNewBuild
-#     labels:
-#       build: thunder-alpine
-#     name: thunder-alpine
-#     namespace: jenkins-ci
-#   spec:
-#     failedBuildsHistoryLimit: 5
-#     nodeSelector: null
-#     output:
-#       to:
-#         kind: ImageStreamTag
-#         name: jenkins-ci/thunder_alpine:latest
-#     postCommit: {}
-#     resources: {}
-#     runPolicy: Serial
-#     source:
-#       contextDir: /nginx_phpfpm
-#       git:
-#         ref: alpine_build
-#         uri: https://github.com/ros-kamach/thunder_nginx_phpfpm
-#       type: Git
-#     strategy:
-#       dockerStrategy:
-#         from:
-#           kind: ImageStreamTag
-#           name: alpine_baseimage:latest
-#       type: Docker
-#     successfulBuildsHistoryLimit: 5
-#     triggers:
-#     - github:
-#         secret: XTgBbIGK2EAP1Rm10yOT
-#       type: GitHub
-#     - generic:
-#         secret: uq-A16jCJe4oN9ObfKS7
-#       type: Generic
-#     - type: ConfigChange
-#     - imageChange:
-#         lastTriggeredImageID: roskamach/alpine_baseimage@sha256:08b8dd5865d5aeabdaf8822cae30a7bcaedcabd2837a3cb75233ea1f9dddb945
-#       type: ImageChange
-#   status:
-#     lastVersion: 1
-######################################
-- apiVersion: v1
+
+-
+  apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    name: thunder-alpine
+    namespace: ${NAMESPACE}
+  spec:
+    failedBuildsHistoryLimit: 5
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: thunder_alpine:latest
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      contextDir: /nginx_phpfpm
+      git:
+        ref: alpine_build
+        uri: https://github.com/ros-kamach/thunder_nginx_phpfpm
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: alpine_baseimage:latest
+      type: Docker
+    successfulBuildsHistoryLimit: 5
+    triggers:
+    - github:
+        secret: eRWXyQKLJT9qXSZzWdNB
+      type: GitHub
+    - generic:
+        secret: aNSpMKtoDrqplwXCFnw4
+      type: Generic
+    - type: ConfigChange
+    - imageChange:
+        lastTriggeredImageID: roskamach/alpine_baseimage@sha256:08b8dd5865d5aeabdaf8822cae30a7bcaedcabd2837a3cb75233ea1f9dddb945
+      type: ImageChange
+
+- 
+  apiVersion: image.openshift.io/v1
   kind: ImageStream
   metadata:
     name: alpine_baseimage
-    namespace: jenkins-ci
+    namespace: ${NAMESPACE}
   spec:
-    # lookupPolicy:
-    #   local: false
+    lookupPolicy:
+      local: false
     tags:
     - annotations:
         openshift.io/imported-from: roskamach/alpine_baseimage:latest
-        namespace: jenkins-ci
       from:
         kind: DockerImage
         name: roskamach/alpine_baseimage:latest
-      to:
-        kind: DockerImage
-        name: jenkins-ci/alpine_baseimage:latest
-      # generation: 2
+      generation: 2
       importPolicy: {}
       name: latest
       referencePolicy:
         type: Source
-######################################
-# - apiVersion: image.openshift.io/v1
-#   kind: ImageStream
-#   metadata:
-#     annotations:
-#       openshift.io/generated-by: OpenShiftNewBuild
-#     generation: 1
-#     labels:
-#       build: thunder-alpine
-#     name: thunder_alpine
-#     namespace: jenkins-ci
-#     resourceVersion: "23322"
-#     selfLink: /apis/image.openshift.io/v1/namespaces/jenkins-ci/imagestreams/thunder_alpine
-#     uid: aa94de25-d2e3-11e9-a7ea-08002766a9db
-#   spec:
-#     lookupPolicy:
-#       local: false
-#   status:
-#     dockerImageRepository: 172.30.1.1:5000/jenkins-ci/thunder_alpine
-#     tags:
-#     - items:
-#         dockerImageReference: 172.30.1.1:5000/jenkins-ci/thunder_alpine@sha256:fd07806cc651f3fc2945b4d27735555731dd2404c1546c3e59dbc42b5ab0999c
-#         generation: 1
-#         image: sha256:fd07806cc651f3fc2945b4d27735555731dd2404c1546c3e59dbc42b5ab0999c
-#       tag: latest
+
+-
+  apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: thunder_alpine
+    namespace: ${NAMESPACE}
+  spec:
+    lookupPolicy:
+      local: false
+  status:
+    dockerImageRepository: docker-registry.default.svc/${NAMESPACE}/thunder_alpine
+
+parameters:
+- description: Project (Namespace)
+  displayName: Project (Namespace)
+  name: NAMESPACE
+  value: "jenkins-ci"

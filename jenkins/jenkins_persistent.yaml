@@ -7,8 +7,9 @@ metadata:
   name: jenkins-persistent
   namespace: openshift
 objects:
-######################################
-- apiVersion: project.openshift.io/v1
+
+- 
+  apiVersion: project.openshift.io/v1
   kind: Project
   metadata:
     annotations:
@@ -20,20 +21,22 @@ objects:
     - kubernetes
   status:
     phase: Active
-######################################
-- apiVersion: v1
+
+- 
+  apiVersion: v1
   kind: ServiceAccount
   metadata:
     annotations:
       serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${JENKINS_SERVICE_NAME}"}}'
     name: ${JENKINS_SERVICE_NAME}
     namespace: ${NAMESPACE}
-######################################
-- apiVersion: rbac.authorization.k8s.io/v1
+
+- 
+  apiVersion: rbac.authorization.k8s.io/v1
   kind: RoleBinding
   metadata:
     name: edit
-    namespace: myproject
+    namespace: ${NAMESPACE}
   roleRef:
     apiGroup: rbac.authorization.k8s.io
     kind: ClusterRole
@@ -42,8 +45,9 @@ objects:
   - kind: ServiceAccount
     name: ${JENKINS_SERVICE_NAME}
     namespace: ${NAMESPACE}
-######################################
-- apiVersion: "v1"
+
+- 
+  apiVersion: "v1"
   kind: "PersistentVolumeClaim"
   metadata:
     name: ${JENKINS_SERVICE_NAME}-storage
@@ -54,8 +58,9 @@ objects:
     resources:
       requests:
         storage: ${JENKINS_STORAGE_SIZE}
-######################################
-- apiVersion: v1
+
+- 
+  apiVersion: v1
   kind: DeploymentConfig
   metadata:
     annotations:
@@ -148,8 +153,9 @@ objects:
         lastTriggeredImage: ""
       type: ImageChange
     - type: ConfigChange
-######################################
-- apiVersion: v1
+
+- 
+  apiVersion: v1
   kind: Service
   metadata:
     name: ${JNLP_SERVICE_NAME}
@@ -165,8 +171,9 @@ objects:
       name: ${JENKINS_SERVICE_NAME}
     sessionAffinity: None
     type: ClusterIP
-######################################
-- apiVersion: v1
+
+- 
+  apiVersion: v1
   kind: Service
   metadata:
     annotations:
@@ -186,8 +193,9 @@ objects:
       name: ${JENKINS_SERVICE_NAME}
     sessionAffinity: None
     type: ClusterIP
-######################################
-- apiVersion: v1
+
+- 
+  apiVersion: v1
   kind: Route
   metadata:
     annotations:
@@ -202,7 +210,7 @@ objects:
     to:
       kind: Service
       name: ${JENKINS_SERVICE_NAME}
-######################################
+
 parameters:
 - description: The name of the OpenShift Service exposed for the Jenkins container.
   displayName: Jenkins Service Name

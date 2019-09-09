@@ -1,0 +1,67 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  template: rbac-template
+metadata:
+  name: rbac-openshift-demo
+  namespace: openshift
+objects:
+######################################
+- apiVersion: user.openshift.io/v1
+  groups: null
+  identities:
+  - anypassword:openshift-demo
+  kind: User
+  metadata:
+    name: openshift-demo
+######################################
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: registry-controller
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cluster-admin
+  subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: openshift-demo
+######################################
+# - apiVersion: rbac.authorization.k8s.io/v1
+#   kind: RoleBinding
+#   metadata:
+#     name: admin-0
+#   roleRef:
+#     apiGroup: rbac.authorization.k8s.io
+#     kind: ClusterRole
+#     name: admin
+#   subjects:
+#   - kind: ServiceAccount
+#     name: jenkins
+#     namespace: jenkins-ci
+
+# - apiVersion: v1
+#   groupNames: null
+#   kind: RoleBinding
+#   metadata:
+#     name: jenkins_edit
+#   roleRef:
+#     name: edit
+#   subjects:
+#   - kind: ServiceAccount
+#     name: jenkins
+
+# - apiVersion: rbac.authorization.k8s.io/v1
+#   kind: RoleBinding
+#   metadata:
+#     name: admin-0
+#     namespace: myproject
+#   roleRef:
+#     apiGroup: rbac.authorization.k8s.io
+#     kind: ClusterRole
+#     name: admin
+#   subjects:
+#   - kind: ServiceAccount
+#     name: jenkins
+#     namespace: jenkins-ci

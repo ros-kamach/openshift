@@ -3,52 +3,72 @@ kind: Template
 labels:
   app: jenkins-persistent
   template: jenkins-persistent-template
-message: Hi
 metadata:
-  annotations:
-    description: |-
-      Jenkins service, with persistent storage.
-    iconClass: icon-jenkins
   name: jenkins-persistent
-  selfLink: /apis/template.openshift.io/v1/namespaces/openshift/templates/jenkins-persistent
+  namespace: openshift
 objects:
+######################################
+- apiVersion: project.openshift.io/v1
+  kind: Project
+  metadata:
+    annotations:
+      openshift.io/description: ""
+      openshift.io/display-name: ""
+    name: ${NAMESPACE}
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+######################################
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${JENKINS_SERVICE_NAME}"}}'
+    name: ${JENKINS_SERVICE_NAME}
+    namespace: ${NAMESPACE}
+######################################
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: edit
+    namespace: myproject
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: ${JENKINS_SERVICE_NAME}
+    namespace: ${NAMESPACE}
+######################################
 - apiVersion: "v1"
   kind: "PersistentVolumeClaim"
   metadata:
     name: ${JENKINS_SERVICE_NAME}-storage
+    namespace: ${NAMESPACE}
   spec:
     accessModes:
       - ${STORAGE_ACCSESS_MODE}
     resources:
       requests:
         storage: ${JENKINS_STORAGE_SIZE}
-- apiVersion: v1
-  kind: Route
-  metadata:
-    annotations:
-      haproxy.router.openshift.io/timeout: 4m
-      template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
-    name: ${JENKINS_SERVICE_NAME}
-  spec:
-    tls:
-      insecureEdgeTerminationPolicy: Redirect
-      termination: edge
-    to:
-      kind: Service
-      name: ${JENKINS_SERVICE_NAME}
+######################################
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
     annotations:
       template.alpha.openshift.io/wait-for-ready: "true"
     name: ${JENKINS_SERVICE_NAME}
+    namespace: ${NAMESPACE}    
   spec:
     replicas: 1
     selector:
       name: ${JENKINS_SERVICE_NAME}
     strategy:
       recreateParams:
-        timeoutSeconds: 1200
+        timeoutSeconds: 2400
       type: Recreate
     template:
       metadata:
@@ -124,30 +144,16 @@ objects:
         from:
           kind: ImageStreamTag
           name: ${JENKINS_IMAGE_STREAM_TAG}
-          namespace: ${NAMESPACE}
+          namespace: openshift
         lastTriggeredImage: ""
       type: ImageChange
     - type: ConfigChange
-- apiVersion: v1
-  kind: ServiceAccount
-  metadata:
-    annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${JENKINS_SERVICE_NAME}"}}'
-    name: ${JENKINS_SERVICE_NAME}
-- apiVersion: v1
-  groupNames: null
-  kind: RoleBinding
-  metadata:
-    name: ${JENKINS_SERVICE_NAME}_edit
-  roleRef:
-    name: edit
-  subjects:
-  - kind: ServiceAccount
-    name: ${JENKINS_SERVICE_NAME}
+######################################
 - apiVersion: v1
   kind: Service
   metadata:
     name: ${JNLP_SERVICE_NAME}
+    namespace: ${NAMESPACE}
   spec:
     ports:
     - name: agent
@@ -159,6 +165,7 @@ objects:
       name: ${JENKINS_SERVICE_NAME}
     sessionAffinity: None
     type: ClusterIP
+######################################
 - apiVersion: v1
   kind: Service
   metadata:
@@ -167,6 +174,7 @@ objects:
         "namespace": "", "kind": "Service"}]'
       service.openshift.io/infrastructure: "true"
     name: ${JENKINS_SERVICE_NAME}
+    namespace: ${NAMESPACE}
   spec:
     ports:
     - name: web
@@ -178,6 +186,23 @@ objects:
       name: ${JENKINS_SERVICE_NAME}
     sessionAffinity: None
     type: ClusterIP
+######################################
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/timeout: 4m
+      template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
+    name: ${JENKINS_SERVICE_NAME}
+    namespace:  ${NAMESPACE}
+  spec:
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: ${JENKINS_SERVICE_NAME}
+######################################
 parameters:
 - description: The name of the OpenShift Service exposed for the Jenkins container.
   displayName: Jenkins Service Name
@@ -275,6 +300,10 @@ parameters:
           run-condition
           subversion
           windows-slaves
+- description: Project (Namespace)
+  displayName: Project (Namespace)
+  name: NAMESPACE
+  value: "jenkins-ci"
 - description: Whether to enable OAuth OpenShift integration. If false, the static
     account 'admin' will be initialized with the password 'password'.
   displayName: Enable OAuth in Jenkins
@@ -304,10 +333,6 @@ parameters:
   displayName: Jenkins Starage
   name: JENKINS_STORAGE_SIZE
   value: "10Gi"
-- description: The OpenShift Namespace where the Jenkins ImageStream resides.
-  displayName: Jenkins ImageStream Namespace
-  name: NAMESPACE
-  value: openshift
 - description: Whether to perform memory intensive, possibly slow, synchronization
     with the Jenkins Update Center on start.  If true, the Jenkins core update monitor
     and site warnings monitor are disabled.

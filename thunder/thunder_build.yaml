@@ -8,19 +8,19 @@ metadata:
   namespace: openshift
 objects:
 
--
-  apiVersion: build.openshift.io/v1
+#Create build with docker strategy (Thunder)
+- apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata:
     name: thunder-alpine
-    namespace: ${NAMESPACE}
+    namespace: ${PROJECT_NAME}
   spec:
     failedBuildsHistoryLimit: 5
     nodeSelector: null
     output:
       to:
         kind: ImageStreamTag
-        name: thunder_alpine:latest
+        name: thunder-alpine:latest
     postCommit: {}
     resources: {}
     runPolicy: Serial
@@ -34,7 +34,7 @@ objects:
       dockerStrategy:
         from:
           kind: ImageStreamTag
-          name: alpine_baseimage:latest
+          name: alpine-baseimage:latest
       type: Docker
     successfulBuildsHistoryLimit: 5
     triggers:
@@ -49,12 +49,12 @@ objects:
         lastTriggeredImageID: roskamach/alpine_baseimage@sha256:08b8dd5865d5aeabdaf8822cae30a7bcaedcabd2837a3cb75233ea1f9dddb945
       type: ImageChange
 
-- 
-  apiVersion: image.openshift.io/v1
+#Import image from axternal repo to lockal
+- apiVersion: image.openshift.io/v1
   kind: ImageStream
   metadata:
-    name: alpine_baseimage
-    namespace: ${NAMESPACE}
+    name: alpine-baseimage
+    namespace: ${PROJECT_NAME}
   spec:
     lookupPolicy:
       local: false
@@ -70,20 +70,20 @@ objects:
       referencePolicy:
         type: Source
 
--
-  apiVersion: image.openshift.io/v1
+#ImageStream for builded a
+- apiVersion: image.openshift.io/v1
   kind: ImageStream
   metadata:
-    name: thunder_alpine
-    namespace: ${NAMESPACE}
+    name: thunder-alpine
+    namespace: ${PROJECT_NAME}
   spec:
     lookupPolicy:
       local: false
   status:
     dockerImageRepository: docker-registry.default.svc/${NAMESPACE}/thunder_alpine
-
+ 
 parameters:
 - description: Project (Namespace)
   displayName: Project (Namespace)
-  name: NAMESPACE
+  name: PROJECT_NAME
   value: "jenkins-ci"

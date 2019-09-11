@@ -8,46 +8,8 @@ metadata:
   namespace: openshift
 objects:
 
-- 
-  apiVersion: project.openshift.io/v1
-  kind: Project
-  metadata:
-    annotations:
-      openshift.io/description: ""
-      openshift.io/display-name: ""
-    name: ${NAMESPACE}
-  spec:
-    finalizers:
-    - kubernetes
-  status:
-    phase: Active
-
-- 
-  apiVersion: v1
-  kind: ServiceAccount
-  metadata:
-    annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${JENKINS_SERVICE_NAME}"}}'
-    name: ${JENKINS_SERVICE_NAME}
-    namespace: ${NAMESPACE}
-
-- 
-  apiVersion: rbac.authorization.k8s.io/v1
-  kind: RoleBinding
-  metadata:
-    name: edit
-    namespace: ${NAMESPACE}
-  roleRef:
-    apiGroup: rbac.authorization.k8s.io
-    kind: ClusterRole
-    name: edit
-  subjects:
-  - kind: ServiceAccount
-    name: ${JENKINS_SERVICE_NAME}
-    namespace: ${NAMESPACE}
-
-- 
-  apiVersion: "v1"
+#Create Persistent Volume Claim
+- apiVersion: "v1"
   kind: "PersistentVolumeClaim"
   metadata:
     name: ${JENKINS_SERVICE_NAME}-storage
@@ -59,8 +21,8 @@ objects:
       requests:
         storage: ${JENKINS_STORAGE_SIZE}
 
-- 
-  apiVersion: v1
+#Jenkins Deployment
+- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     annotations:
@@ -122,11 +84,11 @@ objects:
             timeoutSeconds: 240
           resources:
             limits:
-              cpu: ${GUARANT_CPU}
-              memory: ${GUARANT_MEMORY}
-            requests:
               cpu: ${CPU_LIMIT}
               memory: ${MEMORY_LIMIT}
+            requests:
+              cpu: ${GUARANT_CPU}
+              memory: ${GUARANT_MEMORY}
           securityContext:
             capabilities: {}
             privileged: false
@@ -154,8 +116,8 @@ objects:
       type: ImageChange
     - type: ConfigChange
 
-- 
-  apiVersion: v1
+#Create Service for Jenkins API
+- apiVersion: v1
   kind: Service
   metadata:
     name: ${JNLP_SERVICE_NAME}
@@ -172,8 +134,8 @@ objects:
     sessionAffinity: None
     type: ClusterIP
 
-- 
-  apiVersion: v1
+#Create Service for Jenkins WEB
+- apiVersion: v1
   kind: Service
   metadata:
     annotations:
@@ -194,8 +156,8 @@ objects:
     sessionAffinity: None
     type: ClusterIP
 
-- 
-  apiVersion: v1
+#Make route to Service Jenkins WEB
+- apiVersion: v1
   kind: Route
   metadata:
     annotations:
@@ -210,16 +172,59 @@ objects:
     to:
       kind: Service
       name: ${JENKINS_SERVICE_NAME}
-
+#Variables
 parameters:
+- description: Project (Namespace)
+  displayName: Project (Namespace)
+  name: NAMESPACE
+  value: "jenkins-ci"
 - description: The name of the OpenShift Service exposed for the Jenkins container.
   displayName: Jenkins Service Name
   name: JENKINS_SERVICE_NAME
   value: jenkins
+- description: The minimum amount of CPU the container is guaranteed.
+  displayName: CPU Gauraneed
+  name: GUARANT_CPU
+  value: 100m
+- description: The maximum amount of CPU the container is allowed to use when running.
+  displayName: CPU Limit
+  name: CPU_LIMIT
+  value: '1'
+- description: The maximum amount of memory the container is allowed to use when running.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  value: 2Gi
+- description: The minimum amount of memory the container is guaranteed.
+  displayName: Memory Gauraneed
+  name: GUARANT_MEMORY
+  value: 1Gi
+- description: Jenkins Storage type.
+  displayName: Jenkins Starage
+  name: STORAGE_ACCSESS_MODE
+  value: "ReadWriteOnce"
+- description: Jenkins Storage type.
+  displayName: Jenkins Starage
+  name: JENKINS_STORAGE_SIZE
+  value: "10Gi"
+- description: Name of the ImageStreamTag to be used for the Jenkins image.
+  displayName: Jenkins ImageStreamTag
+  name: JENKINS_IMAGE_STREAM_TAG
+  value: jenkins:2
 - description: The name of the service used for master/slave communication.
   displayName: Jenkins JNLP Service Name
   name: JNLP_SERVICE_NAME
   value: jenkins-jnlp
+- description: Whether to enable OAuth OpenShift integration. If false, the static
+    account 'admin' will be initialized with the password 'password'.
+  displayName: Enable OAuth in Jenkins
+  name: ENABLE_OAUTH
+  value: "true"
+- description: Whether to perform memory intensive, possibly slow, synchronization
+    with the Jenkins Update Center on start.  If true, the Jenkins core update monitor
+    and site warnings monitor are disabled.
+  displayName: Disable memory intensive administrative monitors
+  name: DISABLE_ADMINISTRATIVE_MONITORS
+  value: "false"
 - description: Jenkins Plugins to install
   name: PLUGINS_LIST
   value: >-
@@ -308,46 +313,3 @@ parameters:
           run-condition
           subversion
           windows-slaves
-- description: Project (Namespace)
-  displayName: Project (Namespace)
-  name: NAMESPACE
-  value: "jenkins-ci"
-- description: Whether to enable OAuth OpenShift integration. If false, the static
-    account 'admin' will be initialized with the password 'password'.
-  displayName: Enable OAuth in Jenkins
-  name: ENABLE_OAUTH
-  value: "true"
-- description: The minimum amount of CPU the container is guaranteed.
-  displayName: CPU Gauraneed
-  name: GUARANT_CPU
-  value: '1'
-- description: The maximum amount of CPU the container is allowed to use when running.
-  displayName: CPU Limit
-  name: CPU_LIMIT
-  value: 100m
-- description: The maximum amount of memory the container is allowed to use when running.
-  displayName: Memory Limit
-  name: MEMORY_LIMIT
-  value: 1Gi
-- description: The minimum amount of memory the container is guaranteed.
-  displayName: Memory Gauraneed
-  name: GUARANT_MEMORY
-  value: 2Gi
-- description: Jenkins Storage type.
-  displayName: Jenkins Starage
-  name: STORAGE_ACCSESS_MODE
-  value: "ReadWriteOnce"
-- description: Jenkins Storage type.
-  displayName: Jenkins Starage
-  name: JENKINS_STORAGE_SIZE
-  value: "10Gi"
-- description: Whether to perform memory intensive, possibly slow, synchronization
-    with the Jenkins Update Center on start.  If true, the Jenkins core update monitor
-    and site warnings monitor are disabled.
-  displayName: Disable memory intensive administrative monitors
-  name: DISABLE_ADMINISTRATIVE_MONITORS
-  value: "false"
-- description: Name of the ImageStreamTag to be used for the Jenkins image.
-  displayName: Jenkins ImageStreamTag
-  name: JENKINS_IMAGE_STREAM_TAG
-  value: jenkins:2

@@ -11,10 +11,11 @@ if [ "$1" == "apply" ]
     else
         TIME=0
 fi
+
 oc login -u $LOGIN > /dev/null
 printf "${RED}################${NC}\n"
 printf "Logged as ${LIGHT_GREAN}$LOGIN${NC}\n"
-printf "${RED}################\n"
+printf "${RED}################${NC}\n"
 oc process -f https://raw.githubusercontent.com/ros-kamach/openshift/master/rbac.yaml | oc $1 -f -
 printf "${RED}Sleep for ${TIME}sec${NC}\n"
 sleep $TIME

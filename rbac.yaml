@@ -99,6 +99,44 @@ objects:
     name: default
     namespace: ${THUNDER_PROJECT_NAME}
 
+# #Allow containers to run as root
+# - apiVersion: security.openshift.io/v1
+#   kind: SecurityContextConstraints
+#   metadata:
+#     name: anyuid
+#   volumes:
+#   - configMap
+#   - downwardAPI
+#   - emptyDir
+#   - persistentVolumeClaim
+#   - projected
+#   - secret
+#   priority: 10
+#   readOnlyRootFilesystem: false
+#   requiredDropCapabilities:
+#   - MKNOD
+#   runAsUser:
+#     type: RunAsAny
+#   seLinuxContext:
+#     type: MustRunAs
+#   supplementalGroups:
+#     type: RunAsAny
+#   users:
+#   - system:serviceaccount:${THUNDER_PROJECT_NAME}:default
+#   allowHostDirVolumePlugin: false
+#   allowHostIPC: false
+#   allowHostNetwork: false
+#   allowHostPID: false
+#   allowHostPorts: false
+#   allowPrivilegeEscalation: true
+#   allowPrivilegedContainer: false
+#   allowedCapabilities: null
+#   defaultAddCapabilities: null
+#   fsGroup:
+#     type: RunAsAny
+#   groups:
+#   - system:cluster-admins
+
 parameters:
 - description: User Name.
   displayName: User Name

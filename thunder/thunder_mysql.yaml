@@ -61,6 +61,8 @@ objects:
     selector:
       name: '${DATABASE_SERVICE_NAME}'
     strategy:
+      recreateParams:
+        timeoutSeconds: 2400
       type: Recreate
     template:
       metadata:

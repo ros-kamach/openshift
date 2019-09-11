@@ -198,4 +198,4 @@ parameters:
   displayName: Version of MySQL Image
   name: MYSQL_VERSION
   required: true
-  value: '5.7.27'
+  value: '5.7'

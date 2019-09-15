@@ -1,0 +1,5 @@
+composer global require drush-ops/drush    drush/drush
+drush-ops/drush
+
+chmod +x drush.phar
+export PATH="$HOME/.composer/vendor/bin:$PATH"

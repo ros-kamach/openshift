@@ -8,14 +8,31 @@ metadata:
   namespace: openshift
 objects:
 
+#Create Storage for Thunder files
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${THUNDER_PROJECT_NAME}-storage
+    namespace: ${THUNDER_PROJECT_NAME}
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: '${VOLUME_CAPACITY}'
+
 #Thunder Deployment
 - apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
   metadata:
+    labels:
+      app: thunder-deployment
+      template: thunder-deployment-template
     name: thunder-deployment
     namespace: ${THUNDER_PROJECT_NAME}
   spec:
     replicas: 1
+    revisionHistoryLimit: 10
     selector:
       app: thunder-deployment
       deploymentconfig: thunder-deployment
@@ -26,7 +43,7 @@ objects:
         intervalSeconds: 1
         maxSurge: 25%
         maxUnavailable: 25%
-        timeoutSeconds: 600
+        timeoutSeconds: 800
         updatePeriodSeconds: 1
       type: Rolling
     template:
@@ -37,32 +54,38 @@ objects:
           deploymentconfig: thunder-deployment
       spec:
         containers:
-          - image: docker-registry.default.svc/jenkins-ci/thunder-alpine
+          - env:
+              - name: CONNECT_TO_DB
+                value: 'no'
+                # value: 'yes'
+              - name: MYSQL_DATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: mysql
+                    key: database-name
+                # value: sampledb
+              - name: MYSQL_USER
+                valueFrom:
+                  secretKeyRef:
+                    name: mysql
+                    key: database-user
+                # value: userSRO
+              - name: MYSQL_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: mysql
+                    key: database-password
+                # value: 1oCDQyF5rEmH4gyM
+              - name: MYSQL_HOST
+                value: mysql.${THUNDER_PROJECT_NAME}.svc
+              - name: MYSQL_PORT
+                value: '3306'
+            image: docker-registry.default.svc/jenkins-ci/thunder-alpine
             imagePullPolicy: Always
-            livenessProbe:
-              failureThreshold: 3
-              httpGet:
-                path: /core/install.php
-                port: 80
-                scheme: HTTP
-              initialDelaySeconds: 60
-              periodSeconds: 10
-              successThreshold: 1
-              timeoutSeconds: 60
-            name: thunder-deployment
+            name: thunder-alpine
             ports:
               - containerPort: 80
                 protocol: TCP
-            readinessProbe:
-              failureThreshold: 3
-              httpGet:
-                path: /core/install.php
-                port: 80
-                scheme: HTTP
-              initialDelaySeconds: 20
-              periodSeconds: 10
-              successThreshold: 1
-              timeoutSeconds: 60
             resources:
               limits:
                 cpu: ${CPU_LIMIT}
@@ -72,24 +95,31 @@ objects:
                 memory: ${GUARANT_MEMORY}
             terminationMessagePath: /dev/termination-log
             terminationMessagePolicy: File
+            volumeMounts:
+              - name: ${THUNDER_PROJECT_NAME}-logs
+                mountPath: "/nginx_phpfpm/logs"
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         schedulerName: default-scheduler
         securityContext: {}
         terminationGracePeriodSeconds: 30
+        volumes:
+          - name: ${THUNDER_PROJECT_NAME}-logs
+            persistentVolumeClaim:
+              claimName: ${THUNDER_PROJECT_NAME}-storage
     test: false
     triggers:
-      - type: ConfigChange
       - imageChangeParams:
           automatic: true
           containerNames:
-            - thunder-deployment
+            - thunder-alpine
           from:
             kind: ImageStreamTag
             name: 'thunder-alpine:latest'
             namespace: jenkins-ci
           lastTriggeredImage: docker-registry.default.svc/jenkins-ci/thunder-alpine
         type: ImageChange
+      - type: ConfigChange
         
 # Thunder Deploymen Autoscaling
 - apiVersion: autoscaling/v1
@@ -174,3 +204,8 @@ parameters:
   displayName: Memory Gauraneed
   name: GUARANT_MEMORY
   value: 256Mi
+- description: 'Volume space available for data, e.g. 512Mi, 2Gi.'
+  displayName: Volume Capacity
+  name: VOLUME_CAPACITY
+  required: true
+  value: 1Gi

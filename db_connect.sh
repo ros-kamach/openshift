@@ -28,6 +28,7 @@ if [[ "${DRUSH_INSTALL}" == "yes" ]]
         echo "###"
 fi
 
+
 echo PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT}
 echo MYSQL_DATABASE=${MYSQL_DATABASE}
 echo MYSQL_USER=${MYSQL_USER}

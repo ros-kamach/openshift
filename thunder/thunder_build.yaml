@@ -13,7 +13,7 @@ objects:
   kind: BuildConfig
   metadata:
     name: thunder-alpine
-    namespace: ${PROJECT_NAME}
+    namespace: ${JENKINS_PROJECT_NAME}
   spec:
     failedBuildsHistoryLimit: 5
     nodeSelector: null
@@ -59,7 +59,7 @@ objects:
   kind: ImageStream
   metadata:
     name: alpine-baseimage
-    namespace: ${PROJECT_NAME}
+    namespace: ${JENKINS_PROJECT_NAME}
   spec:
     lookupPolicy:
       local: false
@@ -80,7 +80,7 @@ objects:
   kind: ImageStream
   metadata:
     name: thunder-alpine
-    namespace: ${PROJECT_NAME}
+    namespace: ${JENKINS_PROJECT_NAME}
   spec:
     lookupPolicy:
       local: false
@@ -90,9 +90,9 @@ objects:
 parameters:
 - description: Project (Namespace)
   displayName: Project (Namespace)
-  name: PROJECT_NAME
-  value: "jenkins-ci"
+  name: JENKINS_PROJECT_NAME
+  # value: "jenkins-ci"
 - description: Project (Namespace)
   displayName: Project (Namespace)
   name: THUNDER_PROJECT_NAME
-  value: "thunder"
+  # value: "thunder"

@@ -1,0 +1,28 @@
+properties(
+    [[$class: 'BuildDiscarderProperty',strategy: 
+     [$class: 'LogRotator', numToKeepStr: '10']],
+      pipelineTriggers([pollSCM('H/2 * * * *')]),]
+)
+pipeline {
+    agent any
+
+    stages {
+        stage('Build_Thunder_Image') {
+            steps {
+                script {
+                    openshift.withCluster() {
+                        openshift.withCredentials() {
+                            openshift.withProject() {
+                                checkout([$class           : 'GitSCM',
+                                            branches         : [[name: "*/${PS_GIT_REF}"]],
+                                            userRemoteConfigs: [[url: "${PS_GIT_URI}"]]
+                                ]);
+                             }
+                         }
+                     }
+                 } 
+                openshiftBuild(namespace: '${JENKINS_PROJECT_NAME}', bldCfg: 'thunder-alpine', showBuildLogs: 'true')
+            }
+        }
+    }
+}

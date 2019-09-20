@@ -32,7 +32,7 @@
  * - sites/drupal.org.mysite.test
  * - sites/org.mysite.test
  *
-  * - sites/8080.www.drupal.org.mysite
+ * - sites/8080.www.drupal.org.mysite
  * - sites/www.drupal.org.mysite
  * - sites/drupal.org.mysite
  * - sites/org.mysite
@@ -65,7 +65,7 @@
  * connections that Drupal may use.  Drupal is able to connect
  * to multiple databases, including multiple types of databases,
  * during the same request.
-  *
+ *
  * One example of the simplest connection array is shown below. To use the
  * sample settings, copy and uncomment the code below between the @code and
  * @endcode lines and paste it after the $databases declaration. You will need
@@ -101,7 +101,7 @@ $databases = [];
  * connection should use.  This is usually the same as the name of the
  * database type, such as mysql or sqlite, but not always.  The other
  * properties will vary depending on the driver.  For SQLite, you must
-  * specify a database file name in a directory that is writable by the
+ * specify a database file name in a directory that is writable by the
  * webserver.  For most other drivers, you must specify a
  * username, password, host, and database name.
  *
@@ -138,7 +138,7 @@ $databases = [];
  *
  * You can optionally set prefixes for some or all database table names
  * by using the 'prefix' setting. If a prefix is specified, the table
-  * name will be prepended with its value. Be sure to use valid database
+ * name will be prepended with its value. Be sure to use valid database
  * characters only, usually alphanumeric and underscore. If no prefixes
  * are desired, leave it as an empty string ''.
  *
@@ -175,7 +175,7 @@ $databases = [];
  *     'users'     => 'shared.',
  *     'sessions'  => 'shared.',
  *     'role'      => 'shared.',
-  *     'authmap'   => 'shared.',
+ *     'authmap'   => 'shared.',
  *   ];
  * @endcode
  * NOTE: MySQL and SQLite's definition of a schema is a database.
@@ -249,7 +249,7 @@ $databases = [];
  *   $config_directories = [
  *     CONFIG_SYNC_DIRECTORY => '/directory/outside/webroot',
  *   ];
-  * @endcode
+ * @endcode
  */
 $config_directories = [];
 
@@ -280,13 +280,13 @@ $config_directories = [];
  *   $settings['hash_salt'] = file_get_contents('/home/example/salt.txt');
  * @endcode
  */
-$settings['hash_salt'] = '7_cy3mz5pF1nPCNuSo7jw2rvtfMGndIQHGgc1gFQCwytb4Kh2tsdOdXfRHA2XUIlHEE2U62SvQ';
+$settings['hash_salt'] = 'MjkGDiaCpFjM5zzejJj1pz1mPI6D1eHAGX9CSMgpl083AZNjlbl42oeT0HA74V3JCUibEsC7Bw';
 
 /**
  * Deployment identifier.
  *
  * Drupal's dependency injection container will be automatically invalidated and
-  * rebuilt when the Drupal core version changes. When updating contributed or
+ * rebuilt when the Drupal core version changes. When updating contributed or
  * custom code that changes the container, changing this identifier will also
  * allow the container to be invalidated as soon as code is deployed.
  */
@@ -321,7 +321,7 @@ $settings['update_free_access'] = FALSE;
  * You can also define an array of host names that can be accessed directly,
  * bypassing the proxy, in $settings['http_client_config']['proxy']['no'].
  */
- # $settings['http_client_config']['proxy']['http'] = 'http://proxy_user:proxy_pass@example.com:8080';
+# $settings['http_client_config']['proxy']['http'] = 'http://proxy_user:proxy_pass@example.com:8080';
 # $settings['http_client_config']['proxy']['https'] = 'http://proxy_user:proxy_pass@example.com:8080';
 # $settings['http_client_config']['proxy']['no'] = ['127.0.0.1', 'localhost'];
 
@@ -778,13 +778,13 @@ $settings['entity_update_backup'] = TRUE;
 #   include $app_root . '/' . $site_path . '/settings.local.php';
 # }
 $databases['default']['default'] = array (
-  MYSQL_DATABASE
-  MYSQL_USER
-  MYSQL_PASSWORD
+  'database' => 'sampledb',
+  'username' => 'userO6O',
+  'password' => 'lxf7okXdJOiDw17N',
   'prefix' => '',
-  MYSQL_HOST
-  MYSQL_PORT
+  'host' => 'mysql.thunder.svc',
+  'port' => '3306',
   'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
   'driver' => 'mysql',
 );
-$config_directories['sync'] = 'sites/default/files/config_kxutCdtiqGnMelUeSITSkw6GX5haMx_EdEz48D6AtSLenaoIkoRjTnbeX86Zxh-oKHP2Ivu3qA/sync';
+$config_directories['sync'] = 'sites/default/files/config_JHSINm6XrwwtPciyIlt2C2cDOybI261a5FHSvoaqbh9BB77LxcmLyVEu3ePCgQfhVpDfcp1cTw/sync';

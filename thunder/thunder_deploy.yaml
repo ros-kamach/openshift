@@ -8,6 +8,16 @@ metadata:
   namespace: openshift
 objects:
 
+#Create Secrets
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: '${THUNDER_PROJECT_NAME}-secret'
+    namespace: ${THUNDER_PROJECT_NAME}
+  stringData:
+    site-user: '${SITE_USER}'
+    site-password: '${SITE_PASSWORD}'
+
 #Create Storage for Thunder files
 - apiVersion: v1
   kind: PersistentVolumeClaim
@@ -41,8 +51,18 @@ objects:
       resources: {}
       rollingParams:
         intervalSeconds: 1
-        maxSurge: 25%
+        maxSurge: 10%
         maxUnavailable: 25%
+        post:
+          execNewPod:
+            command:
+              - /bin/sh
+              - '-c'
+              - bash drush.sh
+            containerName: thunder-alpine
+            volumes:
+              - ${THUNDER_PROJECT_NAME}-site
+          failurePolicy: Abort
         timeoutSeconds: 800
         updatePeriodSeconds: 1
       type: Rolling
@@ -55,9 +75,11 @@ objects:
       spec:
         containers:
           - env:
-              - name: CONNECT_TO_DB
+              - name: SITE_INSTALL
+                value: 'yes'
+                # value: 'no'
+              - name: DRUSH_INSTALL
                 value: 'no'
-                # value: 'yes'
               - name: MYSQL_DATABASE
                 valueFrom:
                   secretKeyRef:
@@ -80,9 +102,39 @@ objects:
                 value: mysql.${THUNDER_PROJECT_NAME}.svc
               - name: MYSQL_PORT
                 value: '3306'
-            image: docker-registry.default.svc/jenkins-ci/thunder-alpine
+              - name: SITE_USER
+                valueFrom:
+                  secretKeyRef:
+                    name: '${THUNDER_PROJECT_NAME}-secret'
+                    key: site-user
+              - name: SITE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: '${THUNDER_PROJECT_NAME}-secret'
+                    key: site-password
+            image: docker-registry.default.svc/${JENKINS_PROJECT_NAME}/thunder-alpine
             imagePullPolicy: Always
             name: thunder-alpine
+            livenessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /
+                port: 80
+                scheme: HTTP
+              initialDelaySeconds: 240
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 60
+            readinessProbe:
+              failureThreshold: 3
+              httpGet:
+                path: /
+                port: 80
+                scheme: HTTP
+              initialDelaySeconds: 60
+              periodSeconds: 10
+              successThreshold: 1
+              timeoutSeconds: 15
             ports:
               - containerPort: 80
                 protocol: TCP
@@ -96,28 +148,28 @@ objects:
             terminationMessagePath: /dev/termination-log
             terminationMessagePolicy: File
             volumeMounts:
-              - name: ${THUNDER_PROJECT_NAME}-logs
-                mountPath: "/nginx_phpfpm/logs"
+              - name: ${THUNDER_PROJECT_NAME}-site
+                mountPath: "/usr/share/nginx/html/sites/default"
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         schedulerName: default-scheduler
         securityContext: {}
         terminationGracePeriodSeconds: 30
         volumes:
-          - name: ${THUNDER_PROJECT_NAME}-logs
+          - name: ${THUNDER_PROJECT_NAME}-site
             persistentVolumeClaim:
               claimName: ${THUNDER_PROJECT_NAME}-storage
     test: false
     triggers:
       - imageChangeParams:
-          automatic: true
+          automatic: false
           containerNames:
             - thunder-alpine
           from:
             kind: ImageStreamTag
             name: 'thunder-alpine:latest'
-            namespace: jenkins-ci
-          lastTriggeredImage: docker-registry.default.svc/jenkins-ci/thunder-alpine
+            namespace: ${JENKINS_PROJECT_NAME}
+          lastTriggeredImage: docker-registry.default.svc/${JENKINS_PROJECT_NAME}/thunder-alpine
         type: ImageChange
       - type: ConfigChange
         
@@ -174,12 +226,15 @@ objects:
       weight: 100
     wildcardPolicy: None
 
-
 parameters:
 - description: Project (Namespace)
   displayName: Project (Namespace)
+  name: JENKINS_PROJECT_NAME
+  # value: "jenkins-ci"
+- description: Project (Namespace)
+  displayName: Project (Namespace)
   name: THUNDER_PROJECT_NAME
-  value: "thunder"
+  # value: "thunder"
 - description: Jenkins Storage type.
   displayName: Jenkins Starage
   name: STORAGE_ACCSESS_MODE
@@ -208,4 +263,16 @@ parameters:
   displayName: Volume Capacity
   name: VOLUME_CAPACITY
   required: true
-  value: 1Gi
+  value: 2Gi
+- description: Username for Site admin.
+  displayName: Username for Site admin.
+  from: 'admin_[A-Z0-9]{3}'
+  generate: expression
+  name: SITE_USER
+  required: true
+- description: Password for the Site admin user.
+  displayName: Password for the Site admin user.
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: SITE_PASSWORD
+  required: true

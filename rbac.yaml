@@ -69,6 +69,21 @@ objects:
     name: ${JENKINS_SERVICE_NAME}
     namespace: ${JENKINS_PROJECT_NAME}
 
+#Add role to SA to Jenkins Project
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: edit
+    namespace: ${JENKINS_PROJECT_NAME}
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: ${JENKINS_SERVICE_NAME}
+    namespace: ${JENKINS_PROJECT_NAME}
+
 #Create Project Thunder
 - apiVersion: project.openshift.io/v1
   kind: Project
@@ -83,6 +98,21 @@ objects:
   status:
     phase: Active
 
+#Add role to SA to Thunder project
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: edit
+    namespace: ${THUNDER_PROJECT_NAME}
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: ${JENKINS_SERVICE_NAME}
+    namespace: ${JENKINS_PROJECT_NAME}
+
 # Allow pull image from project "jenkins-ci" to "thunder"
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: RoleBinding
@@ -93,7 +123,7 @@ objects:
     apiGroup: rbac.authorization.k8s.io
     kind: ClusterRole
     name: system:image-puller
-    namespace: ${JENKINS_PROJECT_NAME}
+    # namespace: ${JENKINS_PROJECT_NAME}
   subjects:
   - kind: ServiceAccount
     name: default
@@ -138,6 +168,14 @@ objects:
   - system:cluster-admins
 
 parameters:
+- description: Project (Namespace)
+  displayName: Project (Namespace)
+  name: JENKINS_PROJECT_NAME
+  # value: "jenkins-ci"
+- description: Project (Namespace)
+  displayName: Project (Namespace)
+  name: THUNDER_PROJECT_NAME
+  # value: "thunder"
 - description: User Name.
   displayName: User Name
   name: USER_NAME
@@ -146,11 +184,3 @@ parameters:
   displayName: Jenkins Service Name
   name: JENKINS_SERVICE_NAME
   value: jenkins
-- description: Project (Namespace)
-  displayName: Project (Namespace)
-  name: JENKINS_PROJECT_NAME
-  value: "jenkins-ci"
-- description: Project (Namespace)
-  displayName: Project (Namespace)
-  name: THUNDER_PROJECT_NAME
-  value: "thunder"

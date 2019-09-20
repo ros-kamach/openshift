@@ -13,7 +13,7 @@ objects:
   kind: "PersistentVolumeClaim"
   metadata:
     name: ${JENKINS_SERVICE_NAME}-storage
-    namespace: ${NAMESPACE}
+    namespace: ${JENKINS_PROJECT_NAME}
   spec:
     accessModes:
       - ${STORAGE_ACCSESS_MODE}
@@ -28,7 +28,7 @@ objects:
     annotations:
       template.alpha.openshift.io/wait-for-ready: "true"
     name: ${JENKINS_SERVICE_NAME}
-    namespace: ${NAMESPACE}    
+    namespace: ${JENKINS_PROJECT_NAME}    
   spec:
     replicas: 1
     selector:
@@ -115,13 +115,13 @@ objects:
         lastTriggeredImage: ""
       type: ImageChange
     - type: ConfigChange
-
+    
 #Create Service for Jenkins API
 - apiVersion: v1
   kind: Service
   metadata:
     name: ${JNLP_SERVICE_NAME}
-    namespace: ${NAMESPACE}
+    namespace: ${JENKINS_PROJECT_NAME}
   spec:
     ports:
     - name: agent
@@ -143,7 +143,7 @@ objects:
         "namespace": "", "kind": "Service"}]'
       service.openshift.io/infrastructure: "true"
     name: ${JENKINS_SERVICE_NAME}
-    namespace: ${NAMESPACE}
+    namespace: ${JENKINS_PROJECT_NAME}
   spec:
     ports:
     - name: web
@@ -164,7 +164,7 @@ objects:
       haproxy.router.openshift.io/timeout: 4m
       template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
     name: ${JENKINS_SERVICE_NAME}
-    namespace:  ${NAMESPACE}
+    namespace:  ${JENKINS_PROJECT_NAME}
   spec:
     tls:
       insecureEdgeTerminationPolicy: Redirect
@@ -176,8 +176,12 @@ objects:
 parameters:
 - description: Project (Namespace)
   displayName: Project (Namespace)
-  name: NAMESPACE
-  value: "jenkins-ci"
+  name: JENKINS_PROJECT_NAME
+  # value: "jenkins-ci"
+- description: Project (Namespace)
+  displayName: Project (Namespace)
+  name: THUNDER_PROJECT_NAME
+  # value: "thunder"
 - description: The name of the OpenShift Service exposed for the Jenkins container.
   displayName: Jenkins Service Name
   name: JENKINS_SERVICE_NAME
@@ -313,3 +317,7 @@ parameters:
           run-condition
           subversion
           windows-slaves
+          apache-httpcomponents-client-4-api
+          script-security
+          ssh-credentials
+          openshift-deployer

@@ -38,7 +38,11 @@ MYSQL_DEPLOY_FILE="thunder/thunder_mysql.yaml"
 check_args () {
 case $4 in
   (apply|delete) ;; # OK
-  (*) printf >&2 "Wrong arg.${2}${4}${3}. Allowed are ${1}apply${3} or ${1}delete${3} \n"; exit 1;;
+  (*) printf >&2 "Wrong arg.${2}${4}${3}. Allowed are ${1}apply${3} or ${1}delete${3} \n";
+      printf >&2 "!!! \n";
+      printf >&2 "syntax: bash <*.sh> <jenkins_project> <thunder_proje> <apply or delete> \n";
+      printf >&2 "## \n";
+      printf >&2 "example: bash project.sh jenkins-ci thunder apply \n";exit 1;;
 esac
 }
 

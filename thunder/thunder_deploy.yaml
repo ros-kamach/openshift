@@ -77,7 +77,10 @@ objects:
           - env:
               - name: SITE_INSTALL
                 value: 'yes'
-                # value: 'no'
+              - name: ENABLE_METRICS
+                value: 'yes'
+              - name: PROMETHEUS_METRICS_INSTALL
+                value: 'no'
               - name: DRUSH_INSTALL
                 value: 'no'
               - name: MYSQL_DATABASE
@@ -197,6 +200,8 @@ objects:
   metadata:
     name: thunder-service
     namespace: ${THUNDER_PROJECT_NAME}
+    annotations:
+      prometheus.io/scrape: "true"
   spec:
     ports:
       - name: 80-tcp

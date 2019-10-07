@@ -37,6 +37,14 @@ objects:
             value: 256M
           - name: DRUSH_INSTALL
             value: 'yes'
+          - name: PROMETHEUS_METRICS_INSTALL
+            value: 'yes'
+          - name: SITE_INSTALL
+            # value: 'yes'
+            value: 'no'
+          - name: ENABLE_METRICS
+            # value: 'yes'
+            value: 'no'
         from:
           kind: ImageStreamTag
           name: alpine-baseimage:latest

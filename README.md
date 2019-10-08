@@ -2,7 +2,7 @@
 # Implimitation Jenkins and Thunder CMS for OpenShift
 
 This repository contains components for running Build and manual deploy Thunder CMS by pipeline (Jenkinsfile) for your OpenShift cluster. Repo 
-<img src="https://www.drupal.org/files/Thunder_WBM_20160126.png" alt="Thunder" width="4%"/> **"[ubuntu_build](https://github.com/ros-kamach/thunder_nginx_phpfpm/tree/ubuntu_build)"**
+<img src="https://www.drupal.org/files/Thunder_WBM_20160126.png" alt="Thunder" width="10%"/> **"[ubuntu_build](https://github.com/ros-kamach/thunder_nginx_phpfpm.git)"**
 
 To deploy, run:
 

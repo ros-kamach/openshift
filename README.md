@@ -1,4 +1,4 @@
-![alt text](http://seekvectorlogo.com/wp-content/uploads/2018/12/red-hat-openshift-vector-logo-small.png)
+![alt text](https://i1.wp.com/blog.openshift.com/wp-content/uploads/redhatopenshift.png?w=1376&ssl=1)
 # Implimitation Jenkins and Thunder CMS Build and manual deploy by pipeline for OpenShift
 
 This repository contains components for running either an operational Prometheus and Grafana setup for your OpenShift cluster. 

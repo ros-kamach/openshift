@@ -16,19 +16,19 @@ SERVER_IP=$(minishift ip)
 PROJECT_NAME_JENKINS=$1
 PROJECT_NAME_THUNDER=$2
 
-RBAC_FILE="rbac.yaml"
-JENKINS_FILE="jenkins/jenkins_persistent.yaml"
-THUNDER_BUILD_FILE="thunder/thunder_build.yaml"
-THUNDER_DEPLOY_FILE="thunder/thunder_deploy.yaml"
-THUNDER_PIPELINE_FILE="thunder/thunder_pipeline.yaml"
-MYSQL_DEPLOY_FILE="thunder/thunder_mysql.yaml"
+# RBAC_FILE="rbac.yaml"
+# JENKINS_FILE="jenkins/jenkins_persistent.yaml"
+# THUNDER_BUILD_FILE="thunder/thunder_build.yaml"
+# THUNDER_DEPLOY_FILE="thunder/thunder_deploy.yaml"
+# THUNDER_PIPELINE_FILE="thunder/thunder_pipeline.yaml"
+# MYSQL_DEPLOY_FILE="thunder/thunder_mysql.yaml"
 
-# RBAC_FILE="https://raw.githubusercontent.com/ros-kamach/openshift/master/rbac.yaml"
-# JENKINS_FILE="https://raw.githubusercontent.com/ros-kamach/openshift/master/jenkins/jenkins_persistent.yaml"
-# THUNDER_BUILD_FILE="https://raw.githubusercontent.com/ros-kamach/openshift/master/thunder/thunder_build.yaml"
-# THUNDER_DEPLOY_FILE="https://raw.githubusercontent.com/ros-kamach/openshift/master/thunder/thunder_deploy.yaml"
-# THUNDER_PIPELINE_FILE="https://raw.githubusercontent.com/ros-kamach/openshift/master/thunder/thunder_pipeline.yaml"
-# MYSQL_DEPLOY_FILE="https://raw.githubusercontent.com/ros-kamach/openshift/master/thunder/thunder_mysql.yaml"
+RBAC_FILE="https://raw.githubusercontent.com/ros-kamach/openshift_jenkins_thunder/minishift/rbac.yaml"
+JENKINS_FILE="https://raw.githubusercontent.com/ros-kamach/openshift_jenkins_thunder/minishift/jenkins/jenkins_persistent.yaml"
+THUNDER_BUILD_FILE="https://raw.githubusercontent.com/ros-kamach/openshift_jenkins_thunder/minishift/thunder/thunder_build.yaml"
+THUNDER_DEPLOY_FILE="https://raw.githubusercontent.com/ros-kamach/openshift_jenkins_thunder/minishift/thunder/thunder_deploy.yaml"
+THUNDER_PIPELINE_FILE="https://raw.githubusercontent.com/ros-kamach/openshift_jenkins_thunder/minishift/thunder/thunder_pipeline.yaml"
+MYSQL_DEPLOY_FILE="https://raw.githubusercontent.com/ros-kamach/openshift_jenkins_thunder/minishift/thunder/thunder_mysql.yaml"
 
 #######################################
 ############## Function: ##############

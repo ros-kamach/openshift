@@ -8,11 +8,87 @@ metadata:
   namespace: openshift
 objects:
 
-#Create Persistent Volume Claim
-- apiVersion: "v1"
-  kind: "PersistentVolumeClaim"
+#Add role to SA for deploy jenkins in project
+- apiVersion: authorization.openshift.io/v1
+  groupNames: null
+  kind: RoleBinding
   metadata:
-    name: ${JENKINS_SERVICE_NAME}-storage
+    name: system:deployers
+    namespace: ${JENKINS_PROJECT_NAME}
+  roleRef:
+    name: system:deployer
+  subjects:
+  - kind: ServiceAccount
+    name: deployer
+    namespace: ${JENKINS_PROJECT_NAME}
+  userNames:
+  - system:serviceaccount:${JENKINS_PROJECT_NAME}:deployer
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+      serviceaccounts.openshift.io/oauth-redirectreference.jenkins: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${JENKINS_SERVICE_NAME}"}}'
+    name: ${JENKINS_SERVICE_NAME}
+    namespace: ${JENKINS_PROJECT_NAME}
+
+
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    name: ${JENKINS_SERVICE_NAME}_edit
+    namespace: ${JENKINS_PROJECT_NAME}
+  roleRef:
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: ${JENKINS_SERVICE_NAME}
+    namespace: ${JENKINS_PROJECT_NAME}
+
+#Import image from axternal repo to lockal
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: jenkins-2-centos7-local
+    namespace: ${JENKINS_PROJECT_NAME}
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - annotations:
+        openshift.io/imported-from: ${JENKINS_PROJECT_NAME}/jenkins-2-centos7-local:latest
+      from:
+        kind: DockerImage
+        name: openshift/jenkins-2-centos7:v3.11
+      generation: 2
+      importPolicy: {}
+      name: latest
+      referencePolicy:
+        type: Source
+
+#Make route to Service Jenkins WEB
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      haproxy.router.openshift.io/timeout: 5m
+      template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
+    name: ${JENKINS_SERVICE_NAME}
+    namespace:  ${JENKINS_PROJECT_NAME}
+  spec:
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: ${JENKINS_SERVICE_NAME}
+
+# Create Persistent Volume Claim
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: pvc-${JENKINS_SERVICE_NAME}-storage
     namespace: ${JENKINS_PROJECT_NAME}
   spec:
     accessModes:
@@ -49,8 +125,8 @@ objects:
             value: ${ENABLE_OAUTH}
           - name: OPENSHIFT_ENABLE_REDIRECT_PROMPT
             value: "true"
-          - name: DISABLE_ADMINISTRATIVE_MONITORS
-            value: ${DISABLE_ADMINISTRATIVE_MONITORS}
+          # - name: DISABLE_ADMINISTRATIVE_MONITORS
+          #   value: ${DISABLE_ADMINISTRATIVE_MONITORS}
           - name: KUBERNETES_MASTER
             value: https://kubernetes.default:443
           - name: KUBERNETES_TRUST_CERTIFICATES
@@ -59,26 +135,24 @@ objects:
             value: ${JENKINS_SERVICE_NAME}
           - name: JNLP_SERVICE_NAME
             value: ${JNLP_SERVICE_NAME}
-          - name: INSTALL_PLUGINS
-            value: ${PLUGINS_LIST}
-          image: ' '
+          # - name: INSTALL_PLUGINS
+          #   value: ${PLUGINS_LIST}
+          image: ${JENKINS_PROJECT_NAME}/${JENKINS_IMAGE_STREAM_TAG}
           imagePullPolicy: IfNotPresent
-          name: jenkins
           livenessProbe:
-            failureThreshold: 3
+            failureThreshold: 2
             httpGet:
               path: /login
               port: 8080
-              scheme: HTTP
             initialDelaySeconds: 1200
             periodSeconds: 10
             timeoutSeconds: 240
+          name: jenkins
           readinessProbe:
-            failureThreshold: 3
+            # failureThreshold: 3
             httpGet:
               path: /login
               port: 8080
-              scheme: HTTP
             initialDelaySeconds: 900
             periodSeconds: 10
             timeoutSeconds: 240
@@ -94,15 +168,15 @@ objects:
             privileged: false
           terminationMessagePath: /dev/termination-log
           volumeMounts:
-            - name: ${JENKINS_SERVICE_NAME}-data
-              mountPath: "/var/lib/jenkins"
+            - mountPath: /var/lib/jenkins
+              name: ${JENKINS_SERVICE_NAME}-data
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         serviceAccountName: ${JENKINS_SERVICE_NAME}
         volumes:
           - name: ${JENKINS_SERVICE_NAME}-data
             persistentVolumeClaim:
-              claimName: ${JENKINS_SERVICE_NAME}-storage
+              claimName: pvc-${JENKINS_SERVICE_NAME}-storage
     triggers:
     - imageChangeParams:
         automatic: true
@@ -111,11 +185,11 @@ objects:
         from:
           kind: ImageStreamTag
           name: ${JENKINS_IMAGE_STREAM_TAG}
-          namespace: openshift
+          namespace: ${JENKINS_PROJECT_NAME}
         lastTriggeredImage: ""
       type: ImageChange
     - type: ConfigChange
-    
+
 #Create Service for Jenkins API
 - apiVersion: v1
   kind: Service
@@ -156,22 +230,6 @@ objects:
     sessionAffinity: None
     type: ClusterIP
 
-#Make route to Service Jenkins WEB
-- apiVersion: v1
-  kind: Route
-  metadata:
-    annotations:
-      haproxy.router.openshift.io/timeout: 4m
-      template.openshift.io/expose-uri: http://{.spec.host}{.spec.path}
-    name: ${JENKINS_SERVICE_NAME}
-    namespace:  ${JENKINS_PROJECT_NAME}
-  spec:
-    tls:
-      insecureEdgeTerminationPolicy: Redirect
-      termination: edge
-    to:
-      kind: Service
-      name: ${JENKINS_SERVICE_NAME}
 #Variables
 parameters:
 - description: Project (Namespace)
@@ -189,7 +247,7 @@ parameters:
 - description: The minimum amount of CPU the container is guaranteed.
   displayName: CPU Gauraneed
   name: GUARANT_CPU
-  value: 100m
+  value: 500m
 - description: The maximum amount of CPU the container is allowed to use when running.
   displayName: CPU Limit
   name: CPU_LIMIT
@@ -213,7 +271,7 @@ parameters:
 - description: Name of the ImageStreamTag to be used for the Jenkins image.
   displayName: Jenkins ImageStreamTag
   name: JENKINS_IMAGE_STREAM_TAG
-  value: jenkins:2
+  value: jenkins-2-centos7-local:latest
 - description: The name of the service used for master/slave communication.
   displayName: Jenkins JNLP Service Name
   name: JNLP_SERVICE_NAME

@@ -8,6 +8,29 @@ metadata:
   namespace: openshift
 objects:
 
+# Create SA to push images
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: pusher
+    namespace: ${JENKINS_PROJECT_NAME}
+
+#Add role to SA
+- apiVersion: authorization.openshift.io/v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    name: image-pusher
+    namespace: ${JENKINS_PROJECT_NAME}
+  roleRef:
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: pusher
+    namespace: jenkins-ci
+  userNames:
+  - system:serviceaccount:${JENKINS_PROJECT_NAME}:builder
+
 #Create build with docker strategy (Thunder)
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig

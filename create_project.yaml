@@ -1,0 +1,55 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: rbac-sa-namespace
+  template: rbac-sa-namespace-template
+metadata:
+  name: rbac-sa-namespace
+  namespace: openshift
+objects:
+
+#Create Project "jenkins-ci"
+- apiVersion: project.openshift.io/v1
+  kind: Project
+  metadata:
+    annotations:
+      openshift.io/description: ""
+      openshift.io/display-name: ""
+    name: ${JENKINS_PROJECT_NAME}
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+
+#Create Project Thunder
+- apiVersion: project.openshift.io/v1
+  kind: Project
+  metadata:
+    annotations:
+      openshift.io/description: ""
+      openshift.io/display-name: ""
+    name: ${THUNDER_PROJECT_NAME}
+  spec:
+    finalizers:
+    - kubernetes
+  status:
+    phase: Active
+
+parameters:
+- description: Project (Namespace)
+  displayName: Project (Namespace)
+  name: JENKINS_PROJECT_NAME
+  # value: "jenkins-ci"
+- description: Project (Namespace)
+  displayName: Project (Namespace)
+  name: THUNDER_PROJECT_NAME
+  # value: "thunder"
+- description: User Name.
+  displayName: User Name
+  name: USER_NAME
+  value: openshift-demo
+- description: The name of the OpenShift Service exposed for the Jenkins container.
+  displayName: Jenkins Service Name
+  name: JENKINS_SERVICE_NAME
+  value: jenkins

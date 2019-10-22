@@ -20,8 +20,9 @@ objects:
   spec:
     runPolicy: Serial
     source:
-      contextDir: pipeline_build
+      contextDir: nginx_phpfpm/pipeline_build
       git:
+        ref: alpine_build
         uri: 'https://github.com/ros-kamach/thunder_nginx_phpfpm.git'
       type: Git
     strategy:
@@ -36,7 +37,7 @@ objects:
         jenkinsfilePath: Jenkinsfile
       type: JenkinsPipeline
 
-# Create Pipeline build
+# Create Pipeline build-deploy
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata:
@@ -70,7 +71,7 @@ objects:
             value: https://raw.githubusercontent.com/ros-kamach/bash_healthcheck/master/health_check.sh 
         jenkinsfilePath: Jenkinsfile
       type: JenkinsPipeline
- 
+
 parameters:
 - description: Project (Namespace)
   displayName: Project (Namespace)
@@ -80,3 +81,7 @@ parameters:
   displayName: Project (Namespace)
   name: THUNDER_PROJECT_NAME
   # value: "thunder"
+- description: The name of the OpenShift Service exposed for the Jenkins container.
+  displayName: Jenkins Service Name
+  name: JENKINS_SERVICE_NAME
+  value: jenkins

@@ -9,6 +9,9 @@ Build runs from preconfigurated components in
 To Implement Monitoring use repository
 <img src="https://logodix.com/logo/1736712.png" alt="Thunder" width="20%"/> **"[openshift_monitoring](https://github.com/ros-kamach/openshift_monitoring.git)"**
 
+Attention !!!!
+You must be pre logged at cluster by "openshift cli".
+
 To deploy, run:
 
 syntax:
